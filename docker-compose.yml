@@ -1,0 +1,49 @@
+version: '3.1'
+services:
+ gateway:
+  image: nginx
+  volumes:
+   - "./nginx/conf.d/nginx.conf:/etc/nginx/nginx.conf"
+   - "/srv/docker/nginx/htpasswd:/etc/nginx/auth.htpasswd"
+  ports:
+   - 80:80
+   - 443:443
+  depends_on:
+   - news-umbrella
+   - comments-umbrella
+
+ db:
+  image: mysql:8.0
+  ports:
+   - 3306:3306
+  environment:
+   MYSQL_ROOT_PASSWORD: Root@123
+   MYSQL_DATABASE: newsumbrella
+
+ news-umbrella:
+  build: ./news-umbrella
+  ports:
+   - 8082:8080
+  environment:
+   DB_HOST: db
+   DB_URL: jdbc:mysql://db:3306/newsumbrella?serverTimezone=UTC&createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+  expose:
+   - "8082"
+  depends_on:
+   - db
+
+
+ comments-umbrella:
+   build: ./comments-umbrella
+   ports:
+    - 8081:8080
+   expose:
+    - "8081"
+   depends_on:
+    - redis
+
+ redis:
+    image: redis:alpine
+    ports: ["6379"]
+
+
